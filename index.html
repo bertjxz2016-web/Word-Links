@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A playable word-connection game from the fictional Bostonian Times." />
+  <title>Word Links | Bostonian Times</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230c2940'/%3E%3Cpath d='M15 16h34v7H36v25h-8V23H15z' fill='%23f8f1e4'/%3E%3Ccircle cx='48' cy='47' r='7' fill='%23bc4336'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#gameBoard">Skip to the game grid</a>
+
+  <header class="site-header">
+    <div class="masthead-wrap">
+      <p class="edition">BOSTON • WEEKEND PUZZLES</p>
+      <a class="masthead" href="." aria-label="Bostonian Times Word Links home">The Bostonian <span>Times</span></a>
+      <p class="issue">No. 15 · Word Desk</p>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="game-intro" aria-labelledby="pageTitle">
+      <div>
+        <p class="section-label">THE DAILY WORD GAME</p>
+        <h1 id="pageTitle">Word Links</h1>
+        <p class="lede">Build a chain from <strong>Start A</strong> to <strong>Start B</strong>. Your last word is the bridge: it crosses one word from each chain.</p>
+      </div>
+      <div class="score-banner" aria-label="Current score">
+        <span class="score-label">YOUR SCORE</span>
+        <strong id="scoreValue">0</strong>
+        <span class="score-note">Lower is better</span>
+      </div>
+    </section>
+
+    <section class="game-layout" aria-label="Word Links game">
+      <section class="board-panel" aria-labelledby="boardTitle">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">15 × 15 LETTER GRID</p>
+            <h2 id="boardTitle">Make the connection</h2>
+          </div>
+          <div class="puzzle-actions" aria-label="Puzzle controls">
+            <button class="retry-puzzle-button" id="retryPuzzle" type="button">↻ Retry this puzzle</button>
+            <button class="new-puzzle-button" id="newPuzzle" type="button">New puzzle</button>
+          </div>
+        </div>
+
+        <p class="unlimited-note"><strong>Unlimited puzzles:</strong> replay anytime—there is no daily limit.</p>
+
+        <p class="board-instruction" id="boardInstruction">Choose the first cell for your word, then pick a direction and enter a word. Rows and columns begin at 1.</p>
+        <div class="board-frame">
+          <div id="gameBoard" class="word-grid" role="grid" aria-label="15 by 15 Word Links grid" aria-describedby="boardInstruction"></div>
+        </div>
+        <div class="board-key" aria-label="Grid key">
+          <span class="key-item"><i class="key-swatch start-a-key" aria-hidden="true"></i><strong>Start A</strong> has a double border</span>
+          <span class="key-item"><i class="key-swatch start-b-key" aria-hidden="true"></i><strong>Start B</strong> has a dashed border</span>
+          <span class="key-item"><i class="key-swatch selected-key" aria-hidden="true"></i>Selected cell</span>
+        </div>
+      </section>
+
+      <aside class="game-sidebar" aria-label="Game controls and status">
+        <section class="objective-card">
+          <p class="section-label">TODAY'S OBJECTIVE</p>
+          <h2>Join the two starting words.</h2>
+          <p>Ordinary words cross exactly one existing word. A single finishing bridge may cross two—one from each chain.</p>
+          <p class="rule-status"><span aria-hidden="true">✓</span> Two-cross final bridge enabled</p>
+        </section>
+
+        <section class="starts-card" aria-labelledby="startsTitle">
+          <div class="compact-heading">
+            <h2 id="startsTitle">Starting words</h2>
+            <span class="free-badge">FREE</span>
+          </div>
+          <div id="startWords" class="start-words"></div>
+        </section>
+
+        <form id="placementForm" class="placement-card" novalidate>
+          <div class="compact-heading">
+            <h2>Place a word</h2>
+            <span id="placementState" class="placement-state">Step 1 of 3</span>
+          </div>
+
+          <fieldset class="placement-step">
+            <legend><span class="step-number">1</span> Select the first cell</legend>
+            <p id="selectedCell" class="selection-readout">Choose a square on the grid.</p>
+          </fieldset>
+
+          <fieldset class="placement-step">
+            <legend><span class="step-number">2</span> Choose a direction</legend>
+            <div class="direction-toggle" role="group" aria-label="Word direction">
+              <button id="horizontalButton" class="direction-button active" type="button" aria-pressed="true"><span aria-hidden="true">↔</span> Horizontal</button>
+              <button id="verticalButton" class="direction-button" type="button" aria-pressed="false"><span aria-hidden="true">↕</span> Vertical</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="placement-step">
+            <legend><span class="step-number">3</span> Enter a word</legend>
+            <label class="sr-only" for="wordInput">Word to place</label>
+            <input id="wordInput" name="word" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="15" placeholder="Try a word…" />
+            <p class="input-note">Letters only. This edition includes <span data-dictionary-count>359,039</span> bundled English words (2–15 letters).</p>
+          </fieldset>
+
+          <div class="placement-actions">
+            <button id="previewButton" class="secondary-action" type="button">Preview placement</button>
+            <button id="submitButton" class="primary-action" type="submit">Add word</button>
+          </div>
+          <p id="feedback" class="feedback info" role="status" aria-live="polite">Pick a square to begin.</p>
+        </form>
+
+        <section class="moves-card" aria-labelledby="movesTitle">
+          <div class="compact-heading">
+            <h2 id="movesTitle">Your moves</h2>
+            <button id="hintButton" class="text-button" type="button">Need a nudge?</button>
+          </div>
+          <ol id="moveLog" class="move-log"><li class="empty-log">Accepted words will appear here.</li></ol>
+        </section>
+
+        <section class="attempts-card" aria-labelledby="attemptsTitle">
+          <div class="compact-heading">
+            <h2 id="attemptsTitle">This puzzle</h2>
+            <span id="attemptLabel" class="attempt-badge">Attempt 1</span>
+          </div>
+          <p class="score-target">Point target: <strong id="scoreTarget">—</strong> or lower</p>
+          <ol id="attemptLeaderboard" class="attempt-leaderboard"><li class="empty-log">Finish an attempt to begin your scorecard.</li></ol>
+        </section>
+
+        <section id="successCard" class="success-card" hidden tabindex="-1" aria-labelledby="successTitle">
+          <p class="section-label">CONNECTION MADE</p>
+          <h2 id="successTitle">You linked both starts!</h2>
+          <p id="successText"></p>
+          <div class="success-actions">
+            <button id="successRetryPuzzle" class="secondary-action" type="button">Retry this puzzle</button>
+            <button id="successNewPuzzle" class="primary-action" type="button">New puzzle</button>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="rules-section" aria-labelledby="rulesTitle">
+      <div>
+        <p class="section-label">HOW SCORING WORKS</p>
+        <h2 id="rulesTitle">Make shorter connections for a better score.</h2>
+        <p>Each accepted word costs <strong>10 points + its letters</strong>. Starting words are free, invalid tries cost nothing, and lower scores win the bragging rights.</p>
+      </div>
+      <section class="rulebook" aria-label="Full game rules">
+        <h3>Game rules</h3>
+        <ol>
+          <li><strong>Connect Start A to Start B.</strong> Build outward from either starting word.</li>
+          <li><strong>Place a listed word</strong> left-to-right or top-to-bottom, entirely inside the grid.</li>
+          <li><strong>Ordinary words cross exactly once:</strong> the shared letter must match at a clean, perpendicular intersection. Words cannot overlap in the same direction or touch alongside one another.</li>
+          <li><strong>Finish with one bridge.</strong> The final word may cross exactly two existing words—one in each separate starting chain. No other word may make two crossings.</li>
+          <li><strong>Lower scores are better.</strong> An accepted word costs 10 points plus its length; invalid placements cost nothing.</li>
+        </ol>
+        <p class="word-list-note"><strong>Vocabulary note:</strong> this edition uses <span data-dictionary-count>359,039</span> bundled English words that fit the grid, including common words such as <strong>DILL</strong>. No word list is every dictionary: names, hyphenated words, and entries longer than 15 letters are excluded.</p>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="rulesDialog" class="rules-dialog" aria-labelledby="rulesDialogTitle">
+    <form id="rulesDecisionForm">
+      <p class="section-label">ONE RULES DECISION</p>
+      <h2 id="rulesDialogTitle">Can the final word cross two existing words?</h2>
+      <p>With two separate starting chains, a word that crosses exactly one existing word can only extend one chain—it can never join them. Choose the explicit bridge rule before a puzzle begins.</p>
+      <label class="decision-option">
+        <input type="radio" name="bridgeRule" value="yes" />
+        <span><strong>Yes — allow one winning bridge.</strong><small>The final word may cross exactly two words: one from Start A’s chain and one from Start B’s.</small></span>
+      </label>
+      <label class="decision-option">
+        <input type="radio" name="bridgeRule" value="no" />
+        <span><strong>No — keep every word to one crossing.</strong><small>This version cannot connect two separate starting words, so no playable puzzle will start.</small></span>
+      </label>
+      <p id="decisionNote" class="decision-note">Select a rule to continue.</p>
+      <button id="beginGame" class="primary-action dialog-action" type="submit" disabled>Begin a solvable puzzle</button>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
