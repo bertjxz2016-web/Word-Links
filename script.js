@@ -13,13 +13,21 @@
     'ABLE', 'ABOUT', 'ACORN', 'AFTER', 'AGENT', 'ALARM', 'ALONE', 'ANGLE', 'ANT', 'APPLE', 'ARCH',
     'BARN', 'BEACH', 'BEAR', 'BIRD', 'BLUE', 'BOAT', 'BOOK', 'BRAIN', 'BRIDGE', 'BRIGHT',
     'CAMP', 'CART', 'CHEST', 'COLD', 'CORN', 'CROSS', 'DARK', 'DREAM', 'EAGLE', 'EARTH', 'EAST',
-    'FAIR', 'FARM', 'FIELD', 'FIND', 'FIRE', 'GARDEN', 'GATE', 'GOLD', 'GRAPE', 'GREEN',
+    'FAIR', 'FALL', 'FARM', 'FIELD', 'FIND', 'FIRE', 'GARDEN', 'GATE', 'GOLD', 'GOLF', 'GRAPE', 'GREEN',
     'HARBOR', 'HEART', 'HILL', 'HOME', 'HOUSE', 'IDEA', 'ISLAND', 'JUMP', 'KITE', 'LAKE',
     'LAMP', 'LEAF', 'LIGHT', 'LINK', 'LOSER', 'MAP', 'MARK', 'MINT', 'MOON', 'NEST', 'NIGHT',
     'OCEAN', 'OPEN', 'PAPER', 'PARK', 'PATH', 'PLANT', 'RAIN', 'RIVER', 'ROAD', 'ROSE',
     'SAND', 'SEA', 'SHORE', 'SMALL', 'SNOW', 'SPARK', 'STAR', 'STONE', 'SUN', 'TABLE',
-    'TENT', 'TIDE', 'TIME', 'TRAIN', 'TREE', 'VIOLET', 'WATER', 'WIND', 'WORD', 'YARD'
+    'TENT', 'TIDE', 'TIME', 'TRAIN', 'TREE', 'VIOLET', 'WATER', 'WIND', 'WOLF', 'WORD', 'YARD'
   ];
+  const STARTER_PAIRS = [
+    { id: 'cold-tide', first: 'COLD', second: 'TIDE' },
+    { id: 'fall-time', first: 'FALL', second: 'TIME' },
+    { id: 'golf-tree', first: 'GOLF', second: 'TREE' },
+    { id: 'hill-table', first: 'HILL', second: 'TABLE' },
+    { id: 'wolf-train', first: 'WOLF', second: 'TRAIN' }
+  ];
+  let lastStarterPairId = null;
   let WORD_SET = new Set(REQUIRED_WORDS);
   let dictionaryReady = false;
   let dictionaryCount = REQUIRED_WORDS.length;
@@ -111,10 +119,10 @@
     return Math.floor(Math.random() * ((max - min) + 1)) + min;
   }
 
-  function baseBlueprint() {
+  function baseBlueprint(starterPair = STARTER_PAIRS[0]) {
     return [
-      { role: 'starter', starter: 'A', text: 'COLD', row: 3, col: 2, direction: 'horizontal' },
-      { role: 'starter', starter: 'B', text: 'TIDE', row: 9, col: 8, direction: 'horizontal' },
+      { role: 'starter', starter: 'A', text: starterPair.first, row: 3, col: 2, direction: 'horizontal' },
+      { role: 'starter', starter: 'B', text: starterPair.second, row: 9, col: 8, direction: 'horizontal' },
       { role: 'move', text: 'LAMP', row: 3, col: 4, direction: 'vertical' },
       { role: 'move', text: 'MAP', row: 5, col: 4, direction: 'horizontal' },
       { role: 'move', text: 'PARK', row: 5, col: 6, direction: 'vertical' },
@@ -130,9 +138,23 @@
 
   function makePuzzle({
     randomize = true,
-    transpose = Math.random() < .5
+    transpose = Math.random() < .5,
+    starterPairId = null
   } = {}) {
-    let entries = baseBlueprint().map((entry) => {
+    let starterPair = STARTER_PAIRS.find((pair) => pair.id === starterPairId);
+    if (!starterPair) {
+      if (!randomize) {
+        starterPair = STARTER_PAIRS[0];
+      } else {
+        const choices = STARTER_PAIRS.length > 1
+          ? STARTER_PAIRS.filter((pair) => pair.id !== lastStarterPairId)
+          : STARTER_PAIRS;
+        starterPair = choices[randomInteger(0, choices.length - 1)];
+      }
+    }
+    if (randomize) lastStarterPairId = starterPair.id;
+
+    let entries = baseBlueprint(starterPair).map((entry) => {
       let transformed = { ...entry };
       if (transpose) {
         transformed = {
@@ -156,7 +178,8 @@
       parScore: solution.reduce((total, move) => total + 10 + move.text.length, 0),
       attempts: [],
       attemptNumber: 1,
-      transposed: transpose
+      transposed: transpose,
+      starterPairId: starterPair.id
     };
   }
 
@@ -380,6 +403,10 @@
     for (const transpose of [false, true]) assert(
       solvePuzzle(makePuzzle({ transpose, randomize: false })),
       'A transposed puzzle variation was not solvable.'
+    );
+    for (const starterPair of STARTER_PAIRS) assert(
+      solvePuzzle(makePuzzle({ transpose: false, randomize: false, starterPairId: starterPair.id })),
+      `The ${starterPair.first}/${starterPair.second} puzzle was not solvable.`
     );
     for (let index = 0; index < 12; index += 1) assert(solvePuzzle(makePuzzle()), 'Generated puzzle was not solvable.');
   }
