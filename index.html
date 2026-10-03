@@ -6,14 +6,14 @@
   <meta name="description" content="A playable word-connection game from the fictional Bostonian Times." />
   <title>Word Links | Bostonian Times</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230c2940'/%3E%3Cpath d='M15 16h34v7H36v25h-8V23H15z' fill='%23f8f1e4'/%3E%3Ccircle cx='48' cy='47' r='7' fill='%23bc4336'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=daily-1" />
 </head>
 <body>
   <a class="skip-link" href="#gameBoard">Skip to the game grid</a>
 
   <header class="site-header">
     <div class="masthead-wrap">
-      <p class="edition">BOSTON • WEEKEND PUZZLES</p>
+      <p class="edition">BOSTON • DAILY PUZZLES</p>
       <a class="masthead" href="." aria-label="Bostonian Times Word Links home">The Bostonian <span>Times</span></a>
       <p class="issue">No. 15 · Word Desk</p>
     </div>
@@ -25,6 +25,8 @@
         <p class="section-label">THE DAILY WORD GAME</p>
         <h1 id="pageTitle">Word Links</h1>
         <p class="lede">Build a chain from <strong>Start A</strong> to <strong>Start B</strong>. Your last word is the bridge: it crosses one word from each chain.</p>
+        <p class="daily-meta"><strong id="editionLabel">Today’s Puzzle</strong> · <time id="puzzleDate"></time> · <span id="difficultyLabel"></span></p>
+        <p class="daily-scoring">Each word: <strong>10 + its letters</strong>. Starting words are free. Lower scores are better.</p>
       </div>
       <div class="score-banner" aria-label="Current score">
         <span class="score-label">YOUR SCORE</span>
@@ -38,15 +40,16 @@
         <div class="panel-heading">
           <div>
             <p class="section-label">15 × 15 LETTER GRID</p>
-            <h2 id="boardTitle">Make the connection</h2>
+            <h2 id="boardTitle" tabindex="-1">Make the connection</h2>
           </div>
           <div class="puzzle-actions" aria-label="Puzzle controls">
-            <button class="retry-puzzle-button" id="retryPuzzle" type="button">↻ Retry this puzzle</button>
-            <button class="new-puzzle-button" id="newPuzzle" type="button">New puzzle</button>
+            <button class="secondary-action" id="todayButton" type="button">Today’s puzzle</button>
+            <a class="secondary-action archive-link" href="#archive">Archive</a>
           </div>
         </div>
 
-        <p class="unlimited-note"><strong>Unlimited puzzles:</strong> replay anytime—there is no daily limit.</p>
+        <p class="daily-note" id="nextRelease"></p>
+        <p class="save-note" id="saveNote">Progress is saved on this browser and device.</p>
 
         <p class="board-instruction" id="boardInstruction">Choose the first cell for your word, then pick a direction and enter a word. Rows and columns begin at 1.</p>
         <div class="board-frame">
@@ -61,7 +64,7 @@
 
       <aside class="game-sidebar" aria-label="Game controls and status">
         <section class="objective-card">
-          <p class="section-label">TODAY'S OBJECTIVE</p>
+          <p class="section-label">THE OBJECTIVE</p>
           <h2>Join the two starting words.</h2>
           <p>Ordinary words cross exactly one existing word. A single finishing bridge may cross two—one from each chain.</p>
           <p class="rule-status"><span aria-hidden="true">✓</span> Two-cross final bridge enabled</p>
@@ -118,23 +121,31 @@
 
         <section class="attempts-card" aria-labelledby="attemptsTitle">
           <div class="compact-heading">
-            <h2 id="attemptsTitle">This puzzle</h2>
-            <span id="attemptLabel" class="attempt-badge">Attempt 1</span>
+            <h2 id="attemptsTitle">This edition</h2>
+            <span id="progressLabel" class="attempt-badge">Not started</span>
           </div>
-          <p class="score-target">Point target: <strong id="scoreTarget">—</strong> or lower</p>
-          <ol id="attemptLeaderboard" class="attempt-leaderboard"><li class="empty-log">Finish an attempt to begin your scorecard.</li></ol>
+          <p class="score-target">Route target: <strong id="scoreTarget">—</strong> points or lower</p>
+          <p id="routeNote" class="save-note"></p>
         </section>
 
         <section id="successCard" class="success-card" hidden tabindex="-1" aria-labelledby="successTitle">
           <p class="section-label">CONNECTION MADE</p>
           <h2 id="successTitle">You linked both starts!</h2>
           <p id="successText"></p>
-          <div class="success-actions">
-            <button id="successRetryPuzzle" class="secondary-action" type="button">Retry this puzzle</button>
-            <button id="successNewPuzzle" class="primary-action" type="button">New puzzle</button>
-          </div>
+          <p id="successNext"></p>
+          <a class="secondary-action archive-link" href="#archive">Explore the archive</a>
         </section>
       </aside>
+    </section>
+
+    <section id="archive" class="archive-panel" aria-labelledby="archiveTitle">
+      <div class="compact-heading"><h2 id="archiveTitle">The puzzle archive</h2><button id="archiveToday" class="secondary-action" type="button">Return to today</button></div>
+      <p>Daily editions began <strong>September 28, 2026</strong>. Catch up at your own pace; unfinished games resume where you left them.</p>
+      <div class="archive-controls"><button id="previousMonth" class="secondary-action" type="button" aria-label="Previous month">Previous month</button><h3 id="archiveMonth"></h3><button id="nextMonth" class="secondary-action" type="button" aria-label="Next month">Next month</button></div>
+      <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+      <div id="archiveDates" class="calendar" aria-label="Puzzle dates"></div>
+      <p class="save-note">○ Not started · ◐ In progress · ✓ Completed with score. Future dates and dates before launch are unavailable. Saves stay on this browser and device.</p>
+      <details><summary>How the weekly difficulty works</summary><p>Monday has a direct bridge. Tuesday through Friday extend the chains from 2 to 5 words in the tested route. Saturday has a 7-word route with wider spacing and less common starting letters. Sunday returns to a gentle 2-word connection. Daily word choices, orientation, and positions also change.</p><p>Difficulty labels are estimates, not measured player success rates. Route length and target score describe one verified legal solution; clever players may find a shorter connection. The static generator repeats a limited family of patterns over time.</p></details>
     </section>
 
     <section class="rules-section" aria-labelledby="rulesTitle">
@@ -152,29 +163,12 @@
           <li><strong>Finish with one bridge.</strong> The final word may cross exactly two existing words—one in each separate starting chain. No other word may make two crossings.</li>
           <li><strong>Lower scores are better.</strong> An accepted word costs 10 points plus its length; invalid placements cost nothing.</li>
         </ol>
-        <p class="word-list-note"><strong>Vocabulary note:</strong> this edition uses <span data-dictionary-count>359,039</span> bundled English words that fit the grid, including common words such as <strong>DILL</strong>. No word list is every dictionary: names, hyphenated words, and entries longer than 15 letters are excluded.</p>
+        <p class="word-list-note"><strong>Vocabulary note:</strong> this edition uses <span data-dictionary-count>359,039</span> bundled English words that fit the grid, including common words such as <strong>DILL</strong>. No list is every dictionary. Only alphabetic words of 2–15 letters are accepted; hyphenated and accented entries are excluded. Some entries are uncommon or dated, and proper-name filtering is imperfect.</p>
       </section>
     </section>
   </main>
 
-  <dialog id="rulesDialog" class="rules-dialog" aria-labelledby="rulesDialogTitle">
-    <form id="rulesDecisionForm">
-      <p class="section-label">ONE RULES DECISION</p>
-      <h2 id="rulesDialogTitle">Can the final word cross two existing words?</h2>
-      <p>With two separate starting chains, a word that crosses exactly one existing word can only extend one chain—it can never join them. Choose the explicit bridge rule before a puzzle begins.</p>
-      <label class="decision-option">
-        <input type="radio" name="bridgeRule" value="yes" />
-        <span><strong>Yes — allow one winning bridge.</strong><small>The final word may cross exactly two words: one from Start A’s chain and one from Start B’s.</small></span>
-      </label>
-      <label class="decision-option">
-        <input type="radio" name="bridgeRule" value="no" />
-        <span><strong>No — keep every word to one crossing.</strong><small>This version cannot connect two separate starting words, so no playable puzzle will start.</small></span>
-      </label>
-      <p id="decisionNote" class="decision-note">Select a rule to continue.</p>
-      <button id="beginGame" class="primary-action dialog-action" type="submit" disabled>Begin a solvable puzzle</button>
-    </form>
-  </dialog>
-
-  <script src="script.js"></script>
+  <script src="daily.js?v=daily-1"></script>
+  <script src="script.js?v=daily-1"></script>
 </body>
 </html>

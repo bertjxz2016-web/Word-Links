@@ -20,22 +20,20 @@
     'SAND', 'SEA', 'SHORE', 'SMALL', 'SNOW', 'SPARK', 'STAR', 'STONE', 'SUN', 'TABLE',
     'TENT', 'TIDE', 'TIME', 'TRAIN', 'TREE', 'VIOLET', 'WATER', 'WIND', 'WOLF', 'WORD', 'YARD'
   ];
-  const STARTER_PAIRS = [
-    { id: 'cold-tide', first: 'COLD', second: 'TIDE' },
-    { id: 'fall-time', first: 'FALL', second: 'TIME' },
-    { id: 'golf-tree', first: 'GOLF', second: 'TREE' },
-    { id: 'hill-table', first: 'HILL', second: 'TABLE' },
-    { id: 'wolf-train', first: 'WOLF', second: 'TRAIN' }
-  ];
-  let lastStarterPairId = null;
-  let WORD_SET = new Set(REQUIRED_WORDS);
+  const Daily = window.WordLinksDaily;
+  const STORAGE_PREFIX = `word-links:${Daily.VERSION}:`;
+  let currentDate = Daily.dateInNewYork();
+  let archiveMonth = currentDate.slice(0, 7);
+  let storageHealthy = true;
+  let storedGames = {};
+  let viewingToday = true;
+  let WORD_SET = new Set([...REQUIRED_WORDS, ...Daily.words]);
   let dictionaryReady = false;
   let dictionaryCount = REQUIRED_WORDS.length;
   let dictionaryLoad = null;
   const $ = (selector) => document.querySelector(selector);
   const inBounds = (row, col) => row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
 
-  let bridgeRuleAccepted = false;
   let state = emptyGame();
 
   async function loadDictionary() {
@@ -50,7 +48,7 @@
           .split(/\s+/)
           .map((entry) => entry.trim().toUpperCase())
           .filter((entry) => /^[A-Z]+$/.test(entry) && entry.length >= 2 && entry.length <= GRID_SIZE);
-        WORD_SET = new Set([...entries, ...REQUIRED_WORDS]);
+        WORD_SET = new Set([...entries, ...REQUIRED_WORDS, ...Daily.words]);
         dictionaryCount = WORD_SET.size;
         dictionaryReady = true;
         document.querySelectorAll('[data-dictionary-count]').forEach((target) => {
@@ -61,6 +59,8 @@
       .catch((error) => {
         console.error(error);
         dictionaryReady = true;
+        dictionaryCount = WORD_SET.size;
+        document.querySelectorAll('[data-dictionary-count]').forEach((target) => { target.textContent = dictionaryCount.toLocaleString(); });
         document.body.classList.remove('dictionary-loading');
         setFeedback('error', 'The full word list could not load. The puzzle is using its smaller backup list. Reload to try again.');
         render();
@@ -116,73 +116,7 @@
     };
   }
 
-  function randomInteger(min, max) {
-    return Math.floor(Math.random() * ((max - min) + 1)) + min;
-  }
-
-  function baseBlueprint(starterPair = STARTER_PAIRS[0]) {
-    return [
-      { role: 'starter', starter: 'A', text: starterPair.first, row: 3, col: 2, direction: 'horizontal' },
-      { role: 'starter', starter: 'B', text: starterPair.second, row: 9, col: 8, direction: 'horizontal' },
-      { role: 'move', text: 'LAMP', row: 3, col: 4, direction: 'vertical' },
-      { role: 'move', text: 'MAP', row: 5, col: 4, direction: 'horizontal' },
-      { role: 'move', text: 'PARK', row: 5, col: 6, direction: 'vertical' },
-      { role: 'move', text: 'DARK', row: 8, col: 3, direction: 'horizontal' },
-      { role: 'move', text: 'RAIN', row: 8, col: 5, direction: 'vertical' },
-      { role: 'move', text: 'TENT', row: 6, col: 8, direction: 'vertical' },
-      { role: 'move', text: 'EAST', row: 7, col: 8, direction: 'horizontal' },
-      { role: 'move', text: 'CHEST', row: 3, col: 11, direction: 'vertical' },
-      { role: 'move', text: 'CAMP', row: 3, col: 11, direction: 'horizontal' },
-      { role: 'move', text: 'ANT', row: 6, col: 6, direction: 'horizontal', bridge: true }
-    ];
-  }
-
-  function makePuzzle({
-    randomize = true,
-    transpose = Math.random() < .5,
-    starterPairId = null
-  } = {}) {
-    let starterPair = STARTER_PAIRS.find((pair) => pair.id === starterPairId);
-    if (!starterPair) {
-      if (!randomize) {
-        starterPair = STARTER_PAIRS[0];
-      } else {
-        const choices = STARTER_PAIRS.length > 1
-          ? STARTER_PAIRS.filter((pair) => pair.id !== lastStarterPairId)
-          : STARTER_PAIRS;
-        starterPair = choices[randomInteger(0, choices.length - 1)];
-      }
-    }
-    if (randomize) lastStarterPairId = starterPair.id;
-
-    let entries = baseBlueprint(starterPair).map((entry) => {
-      let transformed = { ...entry };
-      if (transpose) {
-        transformed = {
-          ...transformed,
-          row: transformed.col,
-          col: transformed.row,
-          direction: transformed.direction === 'horizontal' ? 'vertical' : 'horizontal'
-        };
-      }
-      return transformed;
-    });
-    const bounds = boundsFor(entries);
-    const rowOffset = randomize ? randomInteger(-bounds.minRow, (GRID_SIZE - 1) - bounds.maxRow) : 0;
-    const colOffset = randomize ? randomInteger(-bounds.minCol, (GRID_SIZE - 1) - bounds.maxCol) : 0;
-    entries = entries.map((entry) => ({ ...entry, row: entry.row + rowOffset, col: entry.col + colOffset }));
-
-    const solution = entries.filter((entry) => entry.role === 'move');
-    return {
-      starters: entries.filter((entry) => entry.role === 'starter'),
-      solution,
-      parScore: solution.reduce((total, move) => total + 10 + move.text.length, 0),
-      attempts: [],
-      attemptNumber: 1,
-      transposed: transpose,
-      starterPairId: starterPair.id
-    };
-  }
+  function makePuzzle(date = currentDate) { return Daily.makePuzzle(date); }
 
   function putWordOnGrid(game, word) {
     for (const cellInfo of wordCells(word)) {
@@ -371,45 +305,20 @@
       if (!check.valid) return false;
       applyPlacement(sandbox, check);
     }
-    return startsAreConnected(sandbox) && sandbox.score === 139;
+    return startsAreConnected(sandbox) && sandbox.score === puzzle.parScore;
   }
 
   function assert(condition, message) {
     if (!condition) throw new Error(message);
   }
 
-  // Lightweight regression checks exercise the same engine used by players.
+  // Verify the date definitions with the exact engine used by players.
   function runEngineChecks() {
-    const fixed = makePuzzle({ transpose: false, randomize: false });
-    const game = seedGame(fixed);
-    assert(game.score === 0 && game.words.length === 2 && !game.won, 'Replay seed did not reset correctly.');
-    const originalWordCount = game.words.length;
-    assert(validatePlacement(game, { text: 'COLD', row: 14, col: 14, direction: 'horizontal' }).code === 'duplicate', 'Duplicate word check failed.');
-    assert(validatePlacement(game, { text: 'LAMP', row: 14, col: 14, direction: 'horizontal' }).code === 'off-board', 'Boundary check failed.');
-    assert(validatePlacement(game, { text: 'LAMP', row: 0, col: 0, direction: 'horizontal' }).code === 'no-cross', 'No-cross check failed.');
-    assert(validatePlacement(game, { text: 'PLANT', row: 3, col: 4, direction: 'vertical' }).code === 'letter-mismatch', 'Mismatch check failed.');
-    assert(game.words.length === originalWordCount && game.score === 0, 'Invalid placement mutated state.');
-    const overlapGame = seedGame(fixed);
-    const lamp = validatePlacement(overlapGame, fixed.solution[0]);
-    applyPlacement(overlapGame, lamp);
-    assert(validatePlacement(overlapGame, { text: 'LINK', row: 3, col: 4, direction: 'vertical' }).code === 'same-direction', 'Same-direction overlap check failed.');
-
-    for (const move of fixed.solution) {
-      const result = validatePlacement(game, move);
-      assert(result.valid, `Solution move ${move.text} was rejected.`);
-      applyPlacement(game, result);
+    for (let day = 0; day < 56; day += 1) {
+      const date = Daily.addDays(Daily.LAUNCH, day);
+      assert(solvePuzzle(makePuzzle(date)), `Unsolvable daily edition: ${date}`);
+      assert(JSON.stringify(makePuzzle(date)) === JSON.stringify(makePuzzle(date)), 'Daily generation changed.');
     }
-    assert(startsAreConnected(game), 'Victory connection was not detected.');
-    assert(game.score === 139, 'Score calculation was incorrect.');
-    for (const transpose of [false, true]) assert(
-      solvePuzzle(makePuzzle({ transpose, randomize: false })),
-      'A transposed puzzle variation was not solvable.'
-    );
-    for (const starterPair of STARTER_PAIRS) assert(
-      solvePuzzle(makePuzzle({ transpose: false, randomize: false, starterPairId: starterPair.id })),
-      `The ${starterPair.first}/${starterPair.second} puzzle was not solvable.`
-    );
-    for (let index = 0; index < 12; index += 1) assert(solvePuzzle(makePuzzle()), 'Generated puzzle was not solvable.');
   }
 
   function getDraft() {
@@ -447,7 +356,7 @@
         button.setAttribute('role', 'gridcell');
         const selected = state.selected?.row === row && state.selected?.col === col;
         const previewCell = previewCells.get(`${row}:${col}`);
-        const letter = previewCell ? previewCell.letter : cellData?.letter || '';
+        const letter = cellData?.letter || previewCell?.letter || '';
         const starterWord = cellData && [cellData.horizontal, cellData.vertical]
           .map((id) => wordById(state, id))
           .find((word) => word?.starter);
@@ -456,6 +365,14 @@
         if (starterWord?.starter === 'A') button.classList.add('start-a');
         if (starterWord?.starter === 'B') button.classList.add('start-b');
         if (selected) button.classList.add('selected');
+        button.tabIndex = selected || (!state.selected && row === 0 && col === 0) ? 0 : -1;
+        if (selected) {
+          const arrow = document.createElement('span');
+          arrow.className = 'direction-indicator';
+          arrow.setAttribute('aria-hidden', 'true');
+          arrow.textContent = state.direction === 'horizontal' ? '→' : '↓';
+          button.append(arrow);
+        }
         if (previewCell) {
           if (!preview.result.valid || errors.has(`${row}:${col}`)) button.classList.add('preview-bad');
           else if (preview.result.bridge) button.classList.add('preview-bridge');
@@ -514,11 +431,9 @@
       : state.hintLevel === 1
         ? 'One more clue'
         : 'Reveal route word';
-    $('#retryPuzzle').disabled = !hasGame;
-    $('#newPuzzle').disabled = !bridgeRuleAccepted;
     const selected = state.selected;
     $('#selectedCell').textContent = selected
-      ? `Row ${selected.row + 1}, column ${selected.col + 1} is the first letter.`
+      ? `Row ${selected.row + 1}, column ${selected.col + 1} · ${DIRECTIONS[state.direction].label}. This is the first letter.`
       : 'Choose a square on the grid.';
     $('#placementState').textContent = selected ? 'Ready for steps 2–3' : 'Step 1 of 3';
     $('#feedback').className = `feedback ${state.feedback.kind}`;
@@ -542,24 +457,109 @@
       const targetNote = state.score <= target
         ? `You met the ${target}-point target.`
         : `Target: ${target} points or lower.`;
-      $('#successText').textContent = `Attempt ${state.attemptNumber}: ${state.score} points. ${targetNote}`;
+      $('#successText').textContent = `Final score: ${state.score} points. ${targetNote}`;
     }
   }
 
-  function renderAttemptLeaderboard() {
-    const puzzle = state.puzzle;
-    $('#attemptLabel').textContent = `Attempt ${state.attemptNumber}`;
-    $('#scoreTarget').textContent = puzzle ? String(puzzle.parScore) : '—';
-    const target = $('#attemptLeaderboard');
-    const results = puzzle?.attempts || [];
-    if (!results.length) {
-      target.innerHTML = '<li class="empty-log">Finish an attempt to begin your scorecard.</li>';
-      return;
+  function readSaved(date) {
+    if (storedGames[date]) return storedGames[date];
+    try {
+      const raw = localStorage.getItem(STORAGE_PREFIX + date);
+      return raw ? JSON.parse(raw) : null;
+    } catch { storageHealthy = false; return null; }
+  }
+
+  function saveProgress() {
+    const record = {
+      version: Daily.VERSION, date: state.puzzle.date,
+      moves: state.moveLog.map(({ word }) => ({ text: word.text, row: word.row, col: word.col, direction: word.direction })),
+      score: state.score, completed: state.won,
+      selected: state.selected, direction: state.direction,
+      draft: $('#wordInput').value
+    };
+    storedGames[record.date] = record;
+    try { localStorage.setItem(STORAGE_PREFIX + record.date, JSON.stringify(record)); }
+    catch { storageHealthy = false; }
+  }
+
+  function restoreProgress(puzzle) {
+    const game = seedGame(puzzle);
+    const record = readSaved(puzzle.date);
+    if (!record || record.version !== Daily.VERSION || !Array.isArray(record.moves)) return game;
+    for (const move of record.moves) {
+      if (startsAreConnected(game)) break;
+      const result = validatePlacement(game, move);
+      if (!result.valid) {
+        game.feedback = { kind: 'error', text: 'Some saved moves could not be restored. Your valid moves are still here.' };
+        break;
+      }
+      applyPlacement(game, result);
     }
-    target.innerHTML = [...results]
-      .sort((a, b) => a.score - b.score || a.number - b.number)
-      .map((result, rank) => `<li><strong>#${rank + 1} · ${result.score} points</strong> <span>Attempt ${result.number}${result.score <= puzzle.parScore ? ' · at target' : ''}</span></li>`)
-      .join('');
+    game.won = startsAreConnected(game);
+    game.direction = record.direction === 'vertical' ? 'vertical' : 'horizontal';
+    if (!game.won && record.selected && inBounds(record.selected.row, record.selected.col)) game.selected = record.selected;
+    return game;
+  }
+
+  function progressStatus(date) {
+    const record = readSaved(date);
+    return record?.completed ? 'Completed' : record?.moves?.length ? 'In progress' : 'Not started';
+  }
+
+  function renderDaily() {
+    const puzzle = state.puzzle;
+    if (!puzzle) return;
+    const isToday = puzzle.date === currentDate;
+    $('#editionLabel').textContent = isToday ? 'Today’s Puzzle' : 'Archive Puzzle';
+    $('#puzzleDate').textContent = new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeZone: 'UTC' }).format(new Date(`${puzzle.date}T12:00:00Z`));
+    $('#puzzleDate').dateTime = puzzle.date;
+    $('#difficultyLabel').textContent = `${puzzle.difficulty} · ${puzzle.weekday}`;
+    $('#progressLabel').textContent = state.won ? '✓ Completed' : state.moveLog.length ? '◐ In progress' : '○ Not started';
+    $('#scoreTarget').textContent = puzzle.parScore;
+    $('#routeNote').textContent = `${puzzle.solution.length} words in the verified route. Difficulty is an estimate; shorter solutions may exist.`;
+    const release = Daily.nextMidnight();
+    const releaseLabel = new Intl.DateTimeFormat('en-US', { timeZone: Daily.ZONE, month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(release);
+    const releaseText = `Next daily edition: ${releaseLabel} (New York midnight).`;
+    $('#nextRelease').textContent = (state.won ? `✓ Connection made! Final score: ${state.score} points. ` : '') + releaseText;
+    $('#nextRelease').classList.toggle('completed-notice', state.won);
+    $('#successNext').textContent = releaseText;
+    $('#saveNote').textContent = storageHealthy ? 'Progress is saved on this browser and device.' : 'Browser storage is unavailable. Progress will last only while this page stays open.';
+    $('#todayButton').disabled = isToday;
+  }
+
+  function renderArchive() {
+    const first = `${archiveMonth}-01`;
+    const monthDate = new Date(`${first}T12:00:00Z`);
+    $('#archiveMonth').textContent = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(monthDate);
+    $('#previousMonth').disabled = archiveMonth <= Daily.LAUNCH.slice(0, 7);
+    $('#nextMonth').disabled = archiveMonth >= currentDate.slice(0, 7);
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < monthDate.getUTCDay(); i += 1) fragment.append(document.createElement('span'));
+    for (let date = first; date.slice(0, 7) === archiveMonth; date = Daily.addDays(date, 1)) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.date = date;
+      const available = Daily.available(date, currentDate);
+      const status = progressStatus(date);
+      const record = readSaved(date);
+      const marker = status === 'Completed' ? '✓' : status === 'In progress' ? '◐' : '○';
+      button.disabled = !available;
+      button.className = 'calendar-date';
+      button.setAttribute('aria-pressed', String(state.puzzle?.date === date));
+      button.setAttribute('aria-label', `${date}: ${available ? status + (status === 'Completed' ? ', ' + record.score + ' points' : '') : 'Unavailable'}`);
+      const number = document.createElement('strong');
+      number.textContent = Number(date.slice(8));
+      const note = document.createElement('span');
+      note.textContent = available ? `${marker} ${status === 'Completed' ? record.score + ' pts' : status}` : 'Unavailable';
+      note.className = 'calendar-status';
+      const compact = document.createElement('span');
+      compact.className = 'calendar-compact';
+      compact.setAttribute('aria-hidden', 'true');
+      compact.textContent = available ? `${marker}${status === 'Completed' ? ' ' + record.score : ''}` : '—';
+      button.append(number, note, compact);
+      fragment.append(button);
+    }
+    $('#archiveDates').replaceChildren(fragment);
   }
 
   function render() {
@@ -568,7 +568,8 @@
     renderStarts();
     renderControls();
     renderMoveLog();
-    renderAttemptLeaderboard();
+    renderDaily();
+    renderArchive();
     renderSuccess();
   }
 
@@ -599,52 +600,49 @@
     $('#wordInput').value = '';
     if (startsAreConnected(state)) {
       state.won = true;
-      state.puzzle.attempts.push({ number: state.attemptNumber, score: state.score });
+      saveProgress();
       setFeedback('success', `Connection complete! ${placed.text} joined both chains.`);
       render();
       $('#successCard').focus();
     } else {
+      saveProgress();
       setFeedback('success', `${placed.text} added for +${10 + placed.text.length} points. Choose the next first cell.`);
       render();
     }
   }
 
-  async function startNewPuzzle() {
-    if (!bridgeRuleAccepted) {
-      $('#rulesDialog').showModal();
-      return;
-    }
-    if (!dictionaryReady) {
-      setFeedback('info', 'Loading the bundled dictionary…');
-      render();
-      await loadDictionary();
-    }
-    let puzzle = makePuzzle();
-    let attempts = 0;
-    while (!solvePuzzle(puzzle) && attempts < 20) {
-      puzzle = makePuzzle();
-      attempts += 1;
-    }
-    if (!solvePuzzle(puzzle)) throw new Error('Unable to generate a solvable puzzle.');
-    state = seedGame(puzzle);
-    $('#wordInput').value = '';
-    setFeedback('info', 'New puzzle ready. Choose a first cell, a direction, and a word.');
+  async function openPuzzle(date, { focus = false } = {}) {
+    if (!Daily.available(date, currentDate)) return;
+    if (state.puzzle) saveProgress();
+    await loadDictionary();
+    const puzzle = makePuzzle(date);
+    assert(solvePuzzle(puzzle), 'This daily edition failed its solution check.');
+    state = restoreProgress(puzzle);
+    const saved = readSaved(date);
+    $('#wordInput').value = state.won ? '' : typeof saved?.draft === 'string' ? saved.draft.slice(0, 15) : '';
+    viewingToday = date === currentDate;
+    try {
+      localStorage.setItem(STORAGE_PREFIX + 'view', JSON.stringify({ date, followingToday: viewingToday }));
+    } catch { storageHealthy = false; }
+    setFeedback('info', state.won ? 'You’ve already linked this edition! Your completed board and score are saved.' : state.moveLog.length ? 'Welcome back. Continue your saved connection.' : 'Select the first square of your word, choose a direction, then preview or add it.');
     render();
+    if (focus) { $('#boardTitle').focus(); $('#boardTitle').scrollIntoView({ block: 'start' }); }
   }
 
-  function retryCurrentPuzzle() {
-    if (!state.puzzle) return;
-    state.puzzle.attemptNumber += 1;
-    state = seedGame(state.puzzle);
-    $('#wordInput').value = '';
-    setFeedback('info', `Attempt ${state.attemptNumber} started. Your earlier scores stay on this puzzle’s scorecard.`);
-    render();
+  function checkDayChange(instant = new Date()) {
+    const nextDate = Daily.dateInNewYork(instant);
+    if (nextDate === currentDate) return false;
+    currentDate = nextDate;
+    archiveMonth = currentDate.slice(0, 7);
+    if (viewingToday) void openPuzzle(currentDate);
+    else { renderDaily(); renderArchive(); }
+    return true;
   }
 
   function showHint() {
-    const next = state.puzzle?.solution[state.solutionProgress];
+    const next = state.puzzle?.solution.find((move) => !state.words.some((word) => sameMove(word, move)) && validatePlacement(state, move).valid);
     if (!next) {
-      setFeedback('info', 'This puzzle’s tested route is complete. Start a new puzzle for another challenge.');
+      setFeedback('info', 'Your route differs from the reference route. Try extending toward the other starting chain; no legal reference clue is available here.');
       render();
       return;
     }
@@ -667,6 +665,7 @@
     state.preview = null;
     setFeedback('info', `Selected row ${row + 1}, column ${col + 1}. Now choose a direction and enter a word.`);
     render();
+    saveProgress();
     if (shouldFocus) document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`)?.focus();
   }
 
@@ -694,57 +693,59 @@
       state.preview = null;
       setFeedback('info', 'Horizontal selected: your word reads left to right.');
       render();
+      saveProgress();
     });
     $('#verticalButton').addEventListener('click', () => {
       state.direction = 'vertical';
       state.preview = null;
       setFeedback('info', 'Vertical selected: your word reads top to bottom.');
       render();
+      saveProgress();
     });
     $('#wordInput').addEventListener('input', () => {
       if (state.preview) {
         state.preview = null;
         render();
       }
+      saveProgress();
     });
     $('#previewButton').addEventListener('click', previewPlacement);
     $('#placementForm').addEventListener('submit', submitPlacement);
-    $('#newPuzzle').addEventListener('click', () => { void startNewPuzzle(); });
-    $('#retryPuzzle').addEventListener('click', retryCurrentPuzzle);
-    $('#successNewPuzzle').addEventListener('click', () => { void startNewPuzzle(); });
-    $('#successRetryPuzzle').addEventListener('click', retryCurrentPuzzle);
+    $('#todayButton').addEventListener('click', () => { void openPuzzle(currentDate, { focus: true }); });
+    $('#archiveToday').addEventListener('click', () => { void openPuzzle(currentDate, { focus: true }); });
     $('#hintButton').addEventListener('click', showHint);
-
-    $('#rulesDecisionForm').addEventListener('change', (event) => {
-      const yes = event.target.value === 'yes';
-      $('#beginGame').disabled = !yes;
-      $('#decisionNote').className = `decision-note${yes ? '' : ' warning'}`;
-      $('#decisionNote').textContent = yes
-        ? 'The final bridge rule is explicit. You can now begin a solvable puzzle.'
-        : 'With strict one-cross rules, the two separate chains cannot be connected. Choose “Yes” to start a playable puzzle.';
+    $('#archiveDates').addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-date]');
+      if (button && !button.disabled) void openPuzzle(button.dataset.date, { focus: true });
     });
-    $('#rulesDecisionForm').addEventListener('submit', (event) => {
-      event.preventDefault();
-      const decision = new FormData(event.currentTarget).get('bridgeRule');
-      if (decision !== 'yes') return;
-      bridgeRuleAccepted = true;
-      $('#rulesDialog').close();
-      void startNewPuzzle();
-    });
-    $('#rulesDialog').addEventListener('cancel', (event) => event.preventDefault());
+    function changeMonth(offset) {
+      const value = new Date(`${archiveMonth}-01T12:00:00Z`);
+      value.setUTCMonth(value.getUTCMonth() + offset);
+      archiveMonth = value.toISOString().slice(0, 7);
+      renderArchive();
+    }
+    $('#previousMonth').addEventListener('click', () => changeMonth(-1));
+    $('#nextMonth').addEventListener('click', () => changeMonth(1));
+    window.addEventListener('pagehide', () => { if (state.puzzle) saveProgress(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDayChange(); });
+    setInterval(checkDayChange, 1000);
   }
 
-  // Useful for local console verification without affecting play.
   window.WordLinksTest = { validatePlacement, makePuzzle, solvePuzzle, runEngineChecks };
-
-  try {
-    runEngineChecks();
-    bindEvents();
-    render();
-    loadDictionary();
-    $('#rulesDialog').showModal();
-  } catch (error) {
-    console.error(error);
-    document.body.innerHTML = '<main style="max-width:40rem;margin:4rem auto;padding:1.5rem;font-family:system-ui"><h1>Word Links could not start</h1><p>The built-in puzzle check failed. Please reload the page.</p></main>';
+  async function initialize() {
+    try {
+      runEngineChecks();
+      bindEvents();
+      let initialDate = currentDate;
+      try {
+        const view = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'view') || 'null');
+        if (view && !view.followingToday && Daily.available(view.date, currentDate)) initialDate = view.date;
+      } catch { storageHealthy = false; }
+      await openPuzzle(initialDate);
+    } catch (error) {
+      console.error(error);
+      $('#feedback').textContent = 'This edition could not load. Please check the local server and reload.';
+    }
   }
+  void initialize();
 })();

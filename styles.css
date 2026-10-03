@@ -69,6 +69,27 @@ h2 { margin-bottom: .4rem; font-size: 1.45rem; line-height: 1.08; letter-spacing
 .score-label, .score-note { font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .score-banner strong { font: 700 2.3rem/1 var(--serif); }
 .score-note { color: #d6e2e6; letter-spacing: .04em; text-transform: none; }
+.daily-meta { margin: .8rem 0 .3rem; font-size: 1rem; }
+.daily-scoring { margin: 0; color: var(--ink-soft); font-size: .9rem; }
+.daily-note, .save-note { margin: .6rem 0; color: var(--ink-soft); font-size: .875rem; }
+.completed-notice { padding: .8rem; border: 2px solid #34735a; background: #e7f3e9; font-weight: 800; color: #20543e; }
+.archive-link { display: inline-flex; align-items: center; text-decoration: none; border-radius: .2rem; font-weight: 800; }
+.direction-indicator { position: absolute; bottom: 1px; right: 2px; font-size: .65rem; color: var(--ink); }
+.archive-panel { margin-top: 1.25rem; padding: 1.25rem; border: 1px solid var(--line-dark); border-top: 5px solid var(--scarlet); background: var(--paper-light); }
+.archive-panel > p { margin-top: .8rem; }
+.archive-controls { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: 1rem 0; }
+.archive-controls h3 { margin: 0; text-align: center; font-family: var(--serif); }
+.calendar, .calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .4rem; }
+.calendar-weekdays { margin-bottom: .4rem; font-size: .875rem; text-align: center; font-weight: 800; }
+.calendar-date { min-height: 5rem; padding: .5rem; border: 1px solid var(--line); background: #fff; color: var(--ink); text-align: left; border-radius: .2rem; }
+.calendar-date strong, .calendar-date span { display: block; }
+.calendar-date span { font-size: .875rem; }
+.calendar-date .calendar-compact { display: none; }
+.calendar-date[aria-pressed="true"] { outline: 3px double var(--ink); outline-offset: -3px; background: #e4eff0; }
+.calendar-date:disabled { color: #6c6c6c; background: #efede8; }
+.archive-panel details { margin-top: 1rem; }
+.archive-panel summary { cursor: pointer; font-weight: 800; }
+.archive-panel details p { margin: .7rem 0 0; }
 
 .game-layout { display: grid; grid-template-columns: minmax(0, 1fr) 22.25rem; align-items: start; gap: 1.25rem; }
 .board-panel, .objective-card, .starts-card, .placement-card, .moves-card, .attempts-card, .success-card, .rules-section {
@@ -111,7 +132,7 @@ h2 { margin-bottom: .4rem; font-size: 1.45rem; line-height: 1.08; letter-spacing
   color: #fff; background: var(--ink); border-radius: 50%; font-family: var(--sans); font-size: .5rem; font-weight: 900;
 }
 .grid-cell.start-b .starter-token { background: var(--scarlet); }
-.board-key { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: .9rem; color: var(--ink-soft); font-size: .72rem; }
+.board-key { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: .9rem; color: var(--ink-soft); font-size: .875rem; }
 .key-item { display: inline-flex; align-items: center; gap: .35rem; }
 .key-swatch { width: 1rem; height: 1rem; border: 1px solid var(--ink); background: var(--paper-light); }
 .start-a-key { border: 3px double var(--ink); background: #e4eff0; }
@@ -143,7 +164,7 @@ h2 { margin-bottom: .4rem; font-size: 1.45rem; line-height: 1.08; letter-spacing
 .direction-button.active { color: #fff; background: var(--ink); box-shadow: none; }
 #wordInput { width: 100%; margin-top: .55rem; padding: .63rem .7rem; border: 1px solid var(--line-dark); border-radius: .2rem; color: var(--ink); background: #fffefa; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 #wordInput::placeholder { font-weight: 500; letter-spacing: 0; text-transform: none; }
-.input-note { margin: .4rem 0 0; color: var(--ink-soft); font-size: .69rem; }
+.input-note { margin: .4rem 0 0; color: var(--ink-soft); font-size: .875rem; }
 .placement-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: 1rem; }
 .primary-action, .secondary-action { min-height: 2.5rem; padding: .58rem .7rem; }
 .primary-action { color: #fff; background: var(--scarlet); }
@@ -151,7 +172,7 @@ h2 { margin-bottom: .4rem; font-size: 1.45rem; line-height: 1.08; letter-spacing
 .primary-action:disabled { color: #e8d6d2; background: #9b9b96; }
 .secondary-action { color: var(--ink); background: var(--blue); box-shadow: inset 0 0 0 1px #aec5cd; }
 .secondary-action:hover:not(:disabled) { background: #c8e0e7; }
-.feedback { min-height: 1.5rem; margin: .75rem 0 0; padding: .52rem .6rem; border-left: 3px solid var(--blue-strong); color: var(--ink-soft); background: #edf5f6; font-size: .79rem; }
+.feedback { min-height: 1.5rem; margin: .75rem 0 0; padding: .52rem .6rem; border-left: 3px solid var(--blue-strong); color: var(--ink-soft); background: #edf5f6; font-size: .9rem; }
 .feedback.error { border-color: var(--error); color: #7c2924; background: #f9e9e5; }
 .feedback.success { border-color: var(--green); color: #185040; background: #e8f4ec; }
 .feedback.preview { border-color: var(--gold); color: #654200; background: #fff4d6; }
@@ -181,7 +202,7 @@ h2 { margin-bottom: .4rem; font-size: 1.45rem; line-height: 1.08; letter-spacing
 .rules-section p { margin: 0; color: var(--ink-soft); }
 .rulebook { align-self: center; padding: .9rem 1rem; border: 1px solid var(--line); background: #fffaf0; }
 .rulebook h3 { margin: 0; font: 800 1.08rem/1.1 var(--serif); }
-.rulebook ol { display: grid; gap: .48rem; margin: .7rem 0; padding-left: 1.25rem; color: var(--ink-soft); font-size: .82rem; }
+.rulebook ol { display: grid; gap: .48rem; margin: .7rem 0; padding-left: 1.25rem; color: var(--ink-soft); font-size: .95rem; }
 .rulebook li { padding-left: .1rem; }
 .rulebook li::marker { color: var(--scarlet); font-weight: 900; }
 .rulebook strong { color: var(--ink); }
@@ -221,13 +242,22 @@ h2 { margin-bottom: .4rem; font-size: 1.45rem; line-height: 1.08; letter-spacing
   .puzzle-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .new-puzzle-button, .retry-puzzle-button { width: 100%; }
   .board-frame { margin-inline: -.15rem; }
-  .word-grid { min-width: 19rem; }
+  .word-grid { width: max(100%, 19rem); min-width: 19rem; }
   .game-sidebar { grid-template-columns: 1fr; }
   .placement-card, .success-card { grid-column: auto; grid-row: auto; }
   .rules-section { grid-template-columns: 1fr; gap: 1rem; padding: 1.1rem; }
+  .calendar { gap: .2rem; }
+  .calendar-date { min-height: 4.3rem; padding: .25rem; text-align: center; }
+  .calendar-date .calendar-status { display: none; }
+  .calendar-date .calendar-compact { display: block; font-size: .875rem; }
+  .archive-panel { padding: .75rem; }
+  .archive-controls h3 { font-size: 1rem; }
+  .archive-controls button { font-size: .75rem; padding: .45rem; }
+  .game-intro h1 { font-size: 2.6rem; }
+  .grid-cell { font-size: .875rem; }
 }
 @media (max-width: 370px) {
-  .word-grid { min-width: 18rem; }
+  .word-grid { width: max(100%, 18rem); min-width: 18rem; }
   .grid-cell { font-size: .62rem; }
   .board-key { font-size: .67rem; }
 }
