@@ -86,6 +86,7 @@
       puzzle: null,
       attemptNumber: 1,
       solutionProgress: 0,
+      hintLevel: 0,
       won: false,
       nextWordNumber: 1
     };
@@ -508,6 +509,11 @@
     $('#previewButton').disabled = disabled;
     $('#submitButton').disabled = disabled;
     $('#hintButton').disabled = !hasGame || state.won;
+    $('#hintButton').textContent = state.hintLevel === 0
+      ? 'Need a nudge?'
+      : state.hintLevel === 1
+        ? 'One more clue'
+        : 'Reveal route word';
     $('#retryPuzzle').disabled = !hasGame;
     $('#newPuzzle').disabled = !bridgeRuleAccepted;
     const selected = state.selected;
@@ -588,6 +594,7 @@
     if (state.puzzle?.solution[state.solutionProgress] && sameMove(placed, state.puzzle.solution[state.solutionProgress])) {
       state.solutionProgress += 1;
     }
+    state.hintLevel = 0;
     state.selected = null;
     $('#wordInput').value = '';
     if (startsAreConnected(state)) {
@@ -641,8 +648,16 @@
       render();
       return;
     }
+    const hintNumber = Math.min(state.hintLevel + 1, 3);
     const finalNote = next.bridge ? ' This is the two-cross finishing bridge.' : '';
-    setFeedback('preview', `Nudge: try ${next.text} from row ${next.row + 1}, column ${next.col + 1}, ${DIRECTIONS[next.direction].label.toLowerCase()}.${finalNote}`);
+    if (hintNumber === 1) {
+      setFeedback('preview', `Nudge 1 of 3: the next route word starts at row ${next.row + 1}, column ${next.col + 1}, and reads ${DIRECTIONS[next.direction].label.toLowerCase()}.${finalNote}`);
+    } else if (hintNumber === 2) {
+      setFeedback('preview', `Nudge 2 of 3: it has ${next.text.length} letters and starts with “${next.text[0]}”.${finalNote}`);
+    } else {
+      setFeedback('preview', `Nudge 3 of 3: try ${next.text} from row ${next.row + 1}, column ${next.col + 1}, ${DIRECTIONS[next.direction].label.toLowerCase()}.${finalNote}`);
+    }
+    state.hintLevel = hintNumber;
     render();
   }
 
